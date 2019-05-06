@@ -6,7 +6,7 @@ import numpy as np
 import pprint
 import pickle
 
-def prepare_training_data(version = 2, data_dir = 'Data'):
+def prepare_training_data(version = 2, data_dir = '/home/coms4771dummy/vqa/data'):
 	if version == 1:
 		t_q_json_file = join(data_dir, 'MultipleChoice_mscoco_train2014_questions.json')
 		t_a_json_file = join(data_dir, 'mscoco_train2014_annotations.json')
@@ -16,11 +16,10 @@ def prepare_training_data(version = 2, data_dir = 'Data'):
 		qa_data_file = join(data_dir, 'qa_data_file1.pkl')
 		vocab_file = join(data_dir, 'vocab_file1.pkl')
 	else:
-		t_q_json_file = join(data_dir, 'v2_OpenEnded_mscoco_train2014_questions.json')
-		t_a_json_file = join(data_dir, 'v2_mscoco_train2014_annotations.json')
-
-		v_q_json_file = join(data_dir, 'v2_OpenEnded_mscoco_val2014_questions.json')
-		v_a_json_file = join(data_dir, 'v2_mscoco_val2014_annotations.json')
+		t_q_json_file = join(data_dir, 'train', 'questions', 'v2_OpenEnded_mscoco_train2014_questions.json')
+		t_a_json_file = join(data_dir, 'train', 'annotations', 'v2_mscoco_train2014_annotations.json')
+		v_q_json_file = join(data_dir,'val', 'questions', 'v2_OpenEnded_mscoco_val2014_questions.json')
+		v_a_json_file = join(data_dir,'val', 'annotations', 'v2_mscoco_val2014_annotations.json')
 		qa_data_file = join(data_dir, 'qa_data_file2.pkl')
 		vocab_file = join(data_dir, 'vocab_file2.pkl')
 
@@ -199,3 +198,7 @@ def load_fc7_features(data_dir, split):
 	with h5py.File( join( data_dir, (split + '_image_id_list.h5')),'r') as hf:
 		image_id_list = np.array(hf.get('image_id_list'))
 	return fc7_features, image_id_list
+
+
+if __name__ == '__main__':
+    prepare_training_data()

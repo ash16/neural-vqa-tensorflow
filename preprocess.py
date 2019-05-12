@@ -114,8 +114,81 @@ class PrepareData():
                 np.save(path_of_feature, bf.numpy())
          
         return            
+    
+    # This will find the maximum length of any question in our dataset
+    def calc_max_length(tensor):
+        return max(len(t) for t in tensor)            
             
-            
-            
-            
-            
+    # choosing the top 10000 words from the vocabulary
+    def create_question_vector(top_k_words = 1000)
+        question_tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=top_k_words,
+                                                          oov_token="<unk>",
+                                                          filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ ')
+        question_tokenizer.fit_on_texts(self.train_questions)
+        train_question_seqs = question_tokenizer.texts_to_sequences(self.train_questions)
+
+        ques_vocab = tokenizer.word_index
+        question_tokenizer.word_index['<pad>'] = 0
+        question_tokenizer.index_word[0] = '<pad>'
+        
+        # creating the tokenized vectors
+        train_question_seqs = question_tokenizer.texts_to_sequences(train_questions)
+        
+        # padding each vector to the max_length of the captions
+        # if the max_length parameter is not provided, pad_sequences calculates that automatically
+        self.question_vector = tf.keras.preprocessing.sequence.pad_sequences(train_question_seqs, padding='post')
+        
+        # calculating the max_length
+        # used to store the attention weights
+        self.max_q = calc_max_length(train_question_seqs)
+
+    def create_answer_vector():
+        # considering all answers to be part of ans vocab
+        # define example
+        data = self.train_answers
+        values = array(data)
+        print(values[:10])
+
+        # integer encode
+        label_encoder = LabelEncoder()
+        self.answer_vector = label_encoder.fit_transform(values)
+
+        return 
+    
+    # loading the numpy files
+    def map_func(img_name, cap,ans):
+      img_tensor = np.load(img_name.decode('utf-8')+'.npy')
+      return img_tensor, cap,ans
+    
+    def get_dataset(BATCH_SIZE, BUFFER_SIZE, features_shape, attention_features_shape):
+        img_name_train, img_name_val, question_train, question_val,answer_train, answer_val  = train_test_split(self.img_name_vector,
+                                                                    self.question_vector,
+                                                                    self.answer_vector,
+                                                                    test_size=0.2,
+                                                                    random_state=0)
+        
+        dataset = tf.data.Dataset.from_tensor_slices((img_name_train, question_train.astype(np.float32), answer_train.astype(np.float32)))
+
+        # using map to load the numpy files in parallel
+        dataset = dataset.map(lambda item1, item2, item3: tf.numpy_function(map_func, [item1, item2, item3], [tf.float32, tf.float32, tf.float32]),
+                  num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        # shuffling and batching
+        dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+        dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        
+        test_dataset = tf.data.Dataset.from_tensor_slices((img_name_val, question_val.astype(np.float32), answer_val.astype(np.float32)))
+
+        # using map to load the numpy files in parallel
+        test_dataset = test_dataset.map(lambda item1, item2, item3: tf.numpy_function(
+                  map_func, [item1, item2, item3], [tf.float32, tf.float32, tf.float32]),
+                  num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        # shuffling and batching
+        test_dataset = test_dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+        test_dataset = test_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        
+        return dataset, test_dataset
+
+
+
